@@ -1,14 +1,264 @@
 {% extends "base.html" %}
-{% block title %}Home - Assessment Platform{% endblock %}
+{% block title %}Home - Interactive Assessment Platform{% endblock %}
 
 {% block content %}
-<div class="home">
-    <h1>Welcome to the Interactive Assessment Platform</h1>
-    <p>This platform allows students to take timed practical exams and view interactive results.</p>
-    <div class="links">
+
+<style>
+    body {
+        background: #f4f6fc;
+    }
+
+    .hero-section {
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 50px 40px;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        text-align: center;
+        animation: fadeIn 0.6s ease-in-out;
+    }
+
+    .hero-section h1 {
+        font-size: 38px;
+        font-weight: 800;
+        color: #1a237e;
+        margin-bottom: 15px;
+    }
+
+    .hero-section p {
+        font-size: 18px;
+        color: #444;
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+
+    .action-buttons a button {
+        background: #1a237e;
+        color: #fff;
+        padding: 14px 28px;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: .3s;
+        min-width: 160px;
+    }
+
+    .action-buttons a button:hover {
+        background: #3949ab;
+        transform: translateY(-3px);
+    }
+
+    /* Features section */
+    .features {
+        max-width: 1100px;
+        margin: 50px auto;
+        padding: 20px 10px;
+    }
+
+    .features h2 {
+        text-align: center;
+        font-size: 30px;
+        font-weight: 700;
+        color: #1a237e;
+        margin-bottom: 25px;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+    }
+
+    .feature-card {
+        background: #fff;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+        transition: .3s;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .feature-card h3 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a237e;
+        margin-bottom: 10px;
+    }
+
+    .feature-card p {
+        font-size: 15px;
+        color: #555;
+        line-height: 1.6;
+    }
+
+    /* How It Works */
+    .how-it-works {
+        max-width: 1100px;
+        margin: 60px auto;
+        padding: 20px 15px;
+    }
+
+    .how-it-works h2 {
+        text-align: center;
+        font-size: 30px;
+        font-weight: 700;
+        color: #1a237e;
+        margin-bottom: 25px;
+    }
+
+    .steps {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 25px;
+        margin-top: 20px;
+    }
+
+    .step-card {
+        background: #fff;
+        width: 300px;
+        padding: 22px;
+        text-align: center;
+        border-radius: 12px;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+        transition: .3s;
+    }
+
+    .step-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .step-number {
+        font-size: 28px;
+        font-weight: 800;
+        color: #1a237e;
+        margin-bottom: 10px;
+    }
+
+    .footer {
+        margin-top: 70px;
+        padding: 25px 0;
+        background: #1a237e;
+        color: #fff;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="hero-section">
+    <h1>Interactive Assessment Platform</h1>
+    <p>
+        A smart and modern platform for conducting computer-based practical examinations,
+        tracking student performance, and generating detailed analytics.
+    </p>
+
+    <div class="action-buttons">
         <a href="{{ url_for('login') }}"><button>Student Login</button></a>
         <a href="{{ url_for('register') }}"><button>Register</button></a>
         <a href="{{ url_for('admin_login') }}"><button>Admin Login</button></a>
     </div>
 </div>
+
+<!-- Features Section -->
+<div class="features">
+    <h2>Platform Features</h2>
+
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h3>Timed Practical Exams</h3>
+            <p>
+                Students take real-world practical computer assessments under a
+                simulated exam environment with automatic timing and submission.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <h3>Instant Feedback</h3>
+            <p>
+                The system marks student responses automatically and generates 
+                detailed score reports.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <h3>Admin Dashboard</h3>
+            <p>
+                Admins can create, update, manage, and review questions with 
+                ease using a clean and intuitive interface.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <h3>Secure Login System</h3>
+            <p>
+                Secure student and admin authentication prevents unauthorized access.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <h3>Performance Tracking</h3>
+            <p>
+                Students can view their exam history, scores, and improvement progress.
+            </p>
+        </div>
+
+        <div class="feature-card">
+            <h3>Fully Responsive</h3>
+            <p>
+                Works beautifully across laptops, tablets, and mobile devices.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="how-it-works">
+    <h2>How It Works</h2>
+    <div class="steps">
+        <div class="step-card">
+            <div class="step-number">1</div>
+            <p>Create an account or log in as a student.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">2</div>
+            <p>Start your assigned practical assessment.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">3</div>
+            <p>The system automatically scores your work and displays results.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-number">4</div>
+            <p>Admins review student performance and manage question banks.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    © {{ current_year }} Interactive Assessment Platform — All Rights Reserved
+</div>
+
 {% endblock %}

@@ -5,14 +5,16 @@
 <h2>Exam ID: {{ exam.id }}</h2>
 <p>Time Remaining: <span id="timer"></span></p>
 
-<form id="examForm" onsubmit="return false;">
-    <div id="questions" style="margin-top:20px;"></div>
+<div id="exam-container" style="margin-top:20px;">
+    <div id="question-area"></div>
 
-    <button type="button" id="submitBtn" 
-        style="margin-top:20px; padding:10px 20px; font-size:16px;">
-        Submit Exam
-    </button>
-</form>
+    <div style="margin-top:15px;">
+        <button id="prevBtn" style="padding:8px 16px;">Previous</button>
+        <button id="nextBtn" style="padding:8px 16px;">Next</button>
+    </div>
+
+    <div id="question-progress" style="margin-top:20px;"></div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -20,105 +22,173 @@
 let examId = {{ exam.id }};
 let timeRemaining = {{ time_remaining }};
 let timerInterval;
-let answers = [];
 
-// ------------------------- TIMER -------------------------
+let questions = [];  // store questions from API
+let answers = {};    // store student answers
+let currentIndex = 0;
+
+// ----------------- TIMER -----------------
 function startTimer() {
     const timerElem = document.getElementById("timer");
-
     timerInterval = setInterval(() => {
-        if (timeRemaining <= 0) {
+        if(timeRemaining <= 0){
             clearInterval(timerInterval);
             submitExam();
             return;
         }
         let mins = Math.floor(timeRemaining / 60);
         let secs = timeRemaining % 60;
-        timerElem.textContent = mins + ":" + (secs < 10 ? "0" + secs : secs);
+        timerElem.textContent = mins + ":" + (secs < 10 ? "0"+secs : secs);
         timeRemaining--;
     }, 1000);
 }
 
-// ------------------------- LOAD QUESTIONS -------------------------
+// ----------------- LOAD QUESTIONS -----------------
 async function loadQuestions() {
     const resp = await fetch(`/api/exam_questions/${examId}`);
     const data = await resp.json();
-    const container = document.getElementById("questions");
+    questions = data.questions;
 
-    data.questions.forEach(q => {
-        const div = document.createElement("div");
-        div.classList.add("question");
-        div.style.marginBottom = "25px";
+    // initialize empty answers
+    questions.forEach(q => answers[q.question_id] = "");
 
-        div.innerHTML = `
-            <p><b>${q.question_order}.</b></p>
-            <pre style="
-                white-space: pre-wrap;
-                background:#f7f7f7;
-                padding:10px;
-                border-radius:5px;
-                border:1px solid #ddd;
-                font-size:16px;
-                line-height:1.4;
-            ">${q.question_text}</pre>
+    renderQuestion();
+    renderProgress();
+    updateNavButtons();
+}
 
-            <textarea id="q_${q.question_id}" 
-                rows="4" cols="80"
-                style="margin-top:10px; padding:10px; font-size:15px;">
-            </textarea>
-        `;
-        container.appendChild(div);
+// ----------------- RENDER QUESTION -----------------
+function renderQuestion() {
+    const container = document.getElementById("question-area");
+    const q = questions[currentIndex];
+
+    container.innerHTML = `
+        <p><b>Question ${q.question_order}:</b></p>
+        <pre style="
+            white-space: pre-wrap;
+            background:#f7f7f7;
+            padding:10px;
+            border-radius:5px;
+            border:1px solid #ddd;
+            font-size:16px;
+            line-height:1.4;
+        ">${q.question_text}</pre>
+
+        <textarea id="answerBox" rows="4" cols="80"
+            style="margin-top:10px; padding:10px; font-size:15px;">${answers[q.question_id]}</textarea>
+    `;
+
+    // Update progress color when typing
+    document.getElementById("answerBox").addEventListener("input", (e) => {
+        answers[q.question_id] = e.target.value.trim();
+        updateProgressColor();
+        updateNavButtons();
     });
 }
 
-// ------------------------- COLLECT ANSWERS -------------------------
-function collectAnswers() {
-    answers = [];
-    document.querySelectorAll(".question textarea").forEach(ta => {
-        const qid = parseInt(ta.id.split("_")[1]);
-        answers.push({
-            question_id: qid,
-            answer: ta.value.trim()
+// ----------------- NAVIGATION -----------------
+function updateNavButtons() {
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    prevBtn.disabled = currentIndex === 0;
+
+    if(currentIndex === questions.length - 1){
+        nextBtn.textContent = "Submit";
+    } else {
+        nextBtn.textContent = "Next";
+    }
+}
+
+document.getElementById("prevBtn").onclick = () => {
+    if(currentIndex > 0){
+        currentIndex--;
+        renderQuestion();
+        updateNavButtons();
+    }
+};
+
+document.getElementById("nextBtn").onclick = () => {
+    if(currentIndex < questions.length - 1){
+        currentIndex++;
+        renderQuestion();
+        updateNavButtons();
+    } else {
+        submitExam();
+    }
+};
+
+// ----------------- PROGRESS -----------------
+function renderProgress() {
+    const progContainer = document.getElementById("question-progress");
+    progContainer.innerHTML = "";
+
+    questions.forEach((q, idx) => {
+        const span = document.createElement("span");
+        span.textContent = q.question_order;
+        span.style.display = "inline-block";
+        span.style.width = "30px";
+        span.style.height = "30px";
+        span.style.margin = "3px";
+        span.style.lineHeight = "30px";
+        span.style.textAlign = "center";
+        span.style.border = "1px solid #004080";
+        span.style.borderRadius = "50%";
+        span.style.cursor = "pointer";
+        span.style.backgroundColor = answers[q.question_id] ? "#28a745" : "#fff";
+        span.style.color = answers[q.question_id] ? "#fff" : "#004080";
+        span.addEventListener("click", () => {
+            currentIndex = idx;
+            renderQuestion();
+            updateNavButtons();
         });
+        progContainer.appendChild(span);
     });
 }
 
-// ------------------------- SUBMIT EXAM -------------------------
-async function submitExam() {
-    collectAnswers();
+function updateProgressColor() {
+    const spans = document.getElementById("question-progress").children;
+    questions.forEach((q, idx) => {
+        const span = spans[idx];
+        if(answers[q.question_id]){
+            span.style.backgroundColor = "#28a745";
+            span.style.color = "#fff";
+        } else {
+            span.style.backgroundColor = "#fff";
+            span.style.color = "#004080";
+        }
+    });
+}
 
-    if (answers.length === 0) {
-        alert("No answers to submit!");
-        return;
+// ----------------- SUBMIT EXAM -----------------
+async function submitExam() {
+    const payload = {answers: []};
+    for(const qid in answers){
+        payload.answers.push({question_id: qid, answer: answers[qid]});
     }
 
     try {
         const resp = await fetch(`/submit_exam/${examId}`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({answers})
+            method:"POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify(payload)
         });
-
         const result = await resp.json();
-
-        if (result.redirect) {
+        if(result.redirect){
             window.location.href = result.redirect;
         } else {
             alert("Submission failed.");
         }
-
-    } catch (err) {
+    } catch(err){
         console.error(err);
-        alert("An error occurred while submitting your exam.");
+        alert("Error submitting exam.");
     }
 }
 
-// ------------------------- PAGE INIT -------------------------
+// ----------------- INIT -----------------
 window.onload = () => {
     startTimer();
     loadQuestions();
-
-    document.getElementById("submitBtn").onclick = submitExam;
-}
+};
 </script>
 {% endblock %}

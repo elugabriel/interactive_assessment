@@ -2,20 +2,154 @@
 {% block title %}Student Dashboard{% endblock %}
 
 {% block content %}
-<h2>Welcome, {{ student_name }}</h2>
-<form action="{{ url_for('start_exam') }}" method="POST">
-    <button type="submit">Start New Exam</button>
-</form>
 
-<h3>Previous Exams</h3>
-<ul>
-    {% for exam in exams %}
-    <li>
-        Exam ID: {{ exam.id }} | Status: {{ exam.status }} | Score: {{ exam.total_score }}
-        {% if exam.status != "in-progress" %}
-            <a href="{{ url_for('results_page', exam_id=exam.id) }}">View Results</a>
+<style>
+    .dashboard-wrapper {
+        max-width: 1100px;
+        margin: 30px auto;
+        padding: 25px;
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+        background: #1a237e;
+        color: white;
+        padding: 35px;
+        border-radius: 14px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        text-align: center;
+        margin-bottom: 35px;
+    }
+    .welcome-banner h2 {
+        font-size: 30px;
+        margin-bottom: 5px;
+    }
+    .welcome-banner p {
+        opacity: .9;
+    }
+
+    /* Action Card */
+    .action-card {
+        background: #fff;
+        padding: 25px;
+        border-radius: 14px;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        text-align: center;
+        margin-bottom: 35px;
+    }
+
+    .action-card button {
+        background: #1a237e;
+        color: #fff;
+        padding: 12px 22px;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        transition: 0.3s;
+    }
+
+    .action-card button:hover {
+        background: #3949ab;
+    }
+
+    /* Exam List */
+    .exam-list {
+        background: #fff;
+        padding: 25px;
+        border-radius: 14px;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
+
+    .exam-list h3 {
+        color: #1a237e;
+        margin-bottom: 15px;
+        font-size: 22px;
+    }
+
+    .exam-item {
+        background: #e8eaf6;
+        padding: 12px 18px;
+        border-left: 5px solid #1a237e;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .exam-info {
+        font-size: 15px;
+        color: #333;
+    }
+
+    .result-link {
+        background: #1a237e;
+        color: white;
+        padding: 8px 14px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 14px;
+        transition: .3s;
+    }
+
+    .result-link:hover {
+        background: #3949ab;
+    }
+
+    .empty {
+        font-style: italic;
+        color: #666;
+    }
+</style>
+
+<div class="dashboard-wrapper">
+
+    <!-- Banner -->
+    <div class="welcome-banner">
+        <h2>Welcome, {{ student_name }}</h2>
+        <p>Your personalized exam dashboard</p>
+    </div>
+
+    <!-- Start Exam Card -->
+    <div class="action-card">
+        <h3>Start New Exam</h3>
+        <p>Click the button below to begin a fresh assessment.</p>
+        <form action="{{ url_for('start_exam') }}" method="POST">
+            <button type="submit">Start Exam</button>
+        </form>
+    </div>
+
+    <!-- Previous Exams -->
+    <div class="exam-list">
+        <h3>Previous Exams</h3>
+
+        {% if exams|length == 0 %}
+            <p class="empty">You have not taken any exams yet.</p>
         {% endif %}
-    </li>
-    {% endfor %}
-</ul>
+
+        {% for exam in exams %}
+        <div class="exam-item">
+            <div class="exam-info">
+                <strong>Exam ID:</strong> {{ exam.id }} <br>
+                <strong>Status:</strong> {{ exam.status }} <br>
+                <strong>Score:</strong> 
+                {% if exam.total_score is not none %}
+                    {{ exam.total_score }}%
+                {% else %}
+                    Not available
+                {% endif %}
+            </div>
+
+            {% if exam.status != "in-progress" %}
+                <a class="result-link" href="{{ url_for('results_page', exam_id=exam.id) }}">
+                    View Results
+                </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
 {% endblock %}
