@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<h2>Welcome, {{ student_name }}</h2>
+<form action="{{ url_for('start_exam') }}" method="POST">
+    <button type="submit">Start New Exam</button>
+</form>
+
+<h3>Previous Exams</h3>
+<ul>
+    {% for exam in exams %}
+    <li>
+        Exam ID: {{ exam.id }} | Status: {{ exam.status }} | Score: {{ exam.total_score }}
+        {% if exam.status != "in-progress" %}
+            <a href="{{ url_for('results_page', exam_id=exam.id) }}">View Results</a>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

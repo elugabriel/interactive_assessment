@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Home - Assessment Platform{% endblock %}
+
+{% block content %}
+<div class="home">
+    <h1>Welcome to the Interactive Assessment Platform</h1>
+    <p>This platform allows students to take timed practical exams and view interactive results.</p>
+    <div class="links">
+        <a href="{{ url_for('login') }}"><button>Student Login</button></a>
+        <a href="{{ url_for('register') }}"><button>Register</button></a>
+        <a href="{{ url_for('admin_login') }}"><button>Admin Login</button></a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Exam{% endblock %}
+
+{% block content %}
+<h2>Exam ID: {{ exam.id }}</h2>
+<p>Time Remaining: <span id="timer"></span></p>
+
+<form id="examForm" onsubmit="return false;">
+    <div id="questions" style="margin-top:20px;"></div>
+
+    <button type="button" id="submitBtn" 
+        style="margin-top:20px; padding:10px 20px; font-size:16px;">
+        Submit Exam
+    </button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let examId = {{ exam.id }};
+let timeRemaining = {{ time_remaining }};
+let timerInterval;
+let answers = [];
+
+// ------------------------- TIMER -------------------------
+function startTimer() {
+    const timerElem = document.getElementById("timer");
+
+    timerInterval = setInterval(() => {
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            submitExam();
+            return;
+        }
+        let mins = Math.floor(timeRemaining / 60);
+        let secs = timeRemaining % 60;
+        timerElem.textContent = mins + ":" + (secs < 10 ? "0" + secs : secs);
+        timeRemaining--;
+    }, 1000);
+}
+
+// ------------------------- LOAD QUESTIONS -------------------------
+async function loadQuestions() {
+    const resp = await fetch(`/api/exam_questions/${examId}`);
+    const data = await resp.json();
+    const container = document.getElementById("questions");
+
+    data.questions.forEach(q => {
+        const div = document.createElement("div");
+        div.classList.add("question");
+        div.style.marginBottom = "25px";
+
+        div.innerHTML = `
+            <p><b>${q.question_order}.</b></p>
+            <pre style="
+                white-space: pre-wrap;
+                background:#f7f7f7;
+                padding:10px;
+                border-radius:5px;
+                border:1px solid #ddd;
+                font-size:16px;
+                line-height:1.4;
+            ">${q.question_text}</pre>
+
+            <textarea id="q_${q.question_id}" 
+                rows="4" cols="80"
+                style="margin-top:10px; padding:10px; font-size:15px;">
+            </textarea>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// ------------------------- COLLECT ANSWERS -------------------------
+function collectAnswers() {
+    answers = [];
+    document.querySelectorAll(".question textarea").forEach(ta => {
+        const qid = parseInt(ta.id.split("_")[1]);
+        answers.push({
+            question_id: qid,
+            answer: ta.value.trim()
+        });
+    });
+}
+
+// ------------------------- SUBMIT EXAM -------------------------
+async function submitExam() {
+    collectAnswers();
+
+    if (answers.length === 0) {
+        alert("No answers to submit!");
+        return;
+    }
+
+    try {
+        const resp = await fetch(`/submit_exam/${examId}`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({answers})
+        });
+
+        const result = await resp.json();
+
+        if (result.redirect) {
+            window.location.href = result.redirect;
+        } else {
+            alert("Submission failed.");
+        }
+
+    } catch (err) {
+        console.error(err);
+        alert("An error occurred while submitting your exam.");
+    }
+}
+
+// ------------------------- PAGE INIT -------------------------
+window.onload = () => {
+    startTimer();
+    loadQuestions();
+
+    document.getElementById("submitBtn").onclick = submitExam;
+}
+</script>
+{% endblock %}

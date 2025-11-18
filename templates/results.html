@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Exam Results{% endblock %}
+
+{% block content %}
+<h2>Exam {{ exam.id }} Results</h2>
+<p>Total Score: {{ exam.total_score }}</p>
+
+<h3>Answers</h3>
+<ul>
+    {% for r in results %}
+    <li>
+        {{ r.question_text }} <br>
+        Your Answer: {{ r.student_answer }} <br>
+        Correct Answer: {{ r.correct_answer }} <br>
+        {% if r.is_correct %}<b style="color:green">Correct</b>{% else %}<b style="color:red">Wrong</b>{% endif %}
+    </li>
+    {% endfor %}
+</ul>
+
+<h3>Topic Summary</h3>
+<canvas id="topicChart" width="600" height="400"></canvas>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+async function drawChart() {
+    const resp = await fetch(`/api/results_data/{{ exam.id }}`);
+    const data = await resp.json();
+    const ctx = document.getElementById('topicChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.topics,
+            datasets: [{
+                label: 'Correct Answers',
+                data: data.topic_correct,
+                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+            }, {
+                label: 'Total Questions',
+                data: data.topic_total,
+                backgroundColor: 'rgba(192, 75, 75, 0.4)'
+            }]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero:true } } }
+    });
+}
+drawChart();
+</script>
+{% endblock %}
