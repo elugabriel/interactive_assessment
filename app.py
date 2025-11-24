@@ -416,7 +416,7 @@ def submit_exam(exam_id):
         ans.score = score
         total_score += score
         db.session.add(ans)
-    exam.total_score = total_score
+    exam.total_score = total_score *2
     exam.status = "completed"
     db.session.add(exam)
     db.session.commit()
@@ -463,10 +463,15 @@ def api_results_data(exam_id):
     exam = Exam.query.get_or_404(exam_id)
     if exam.student_id != session["student_id"]:
         abort(403)
+
     answers = ExamAnswer.query.filter_by(exam_id=exam_id).all()
-    max_score = len(answers)
-    correct = sum(1 for a in answers if a.is_correct)
-    incorrect = max_score - correct
+    correct_count = sum(1 for a in answers if a.is_correct)
+    incorrect_count = 50 - correct_count  # max_score fixed at 50
+
+    # Calculate percentage score based on 50
+    total_score_percent = round((correct_count / 50) * 100, 2)
+
+    # Topic summary (currently all labeled "General")
     topic_summary = {}
     for a in answers:
         q = Question.query.get(a.question_id)
@@ -477,15 +482,17 @@ def api_results_data(exam_id):
         topic_summary[topic]["total"] += 1
         if a.is_correct:
             topic_summary[topic]["correct"] += 1
+
     topics = list(topic_summary.keys())
     topic_correct = [topic_summary[t]["correct"] for t in topics]
     topic_total = [topic_summary[t]["total"] for t in topics]
+
     return jsonify({
         "exam_id": exam_id,
-        "total_score": exam.total_score,
-        "max_score": max_score,
-        "correct_count": correct,
-        "incorrect_count": incorrect,
+        "total_score": total_score_percent,
+        "max_score": 50,
+        "correct_count": correct_count,
+        "incorrect_count": incorrect_count,
         "topics": topics,
         "topic_correct": topic_correct,
         "topic_total": topic_total
