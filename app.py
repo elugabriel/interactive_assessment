@@ -150,7 +150,8 @@ def create_exam_for_student(student_id, num_questions=50, duration_minutes=60):
     db.session.add(exam)
     db.session.commit()
 
-    all_qs = Question.query.all()
+    # Get only questions with ID >= 102
+    all_qs = Question.query.filter(Question.id >= 102).all()
     if not all_qs:
         return None
     selected = random.sample(all_qs, min(num_questions, len(all_qs)))
@@ -163,9 +164,41 @@ def create_exam_for_student(student_id, num_questions=50, duration_minutes=60):
     add_log(student_id, f"Started exam {exam.id} with {len(selected)} questions")
     return exam
 
-
 import difflib
 
+
+# Add this helper function
+def get_available_questions():
+    """Return only questions with ID >= 102"""
+    return Question.query.filter(Question.id >= 102).all()
+
+
+@app.cli.command("cleanup-old-questions")
+def cleanup_old_questions():
+    """Remove questions 1-101 from the database (optional)"""
+    with app.app_context():
+        # This will permanently delete questions 1-101
+        old_questions = Question.query.filter(Question.id <= 101).all()
+        count = len(old_questions)
+        for q in old_questions:
+            db.session.delete(q)
+        db.session.commit()
+        print(f"Deleted {count} old questions (IDs 1-101)")
+        
+@app.cli.command("renumber-questions")
+def renumber_questions():
+    """Renumber questions to start from 102 (optional)"""
+    with app.app_context():
+        questions = Question.query.order_by(Question.id).all()
+        new_id = 102
+        for q in questions:
+            if q.id != new_id:
+                # Note: Changing primary keys is tricky and not recommended
+                # This is just to show the concept
+                print(f"Question {q.id} would be renumbered to {new_id}")
+            new_id += 1
+        print("Note: Renumbering primary keys requires careful migration strategy")        
+        
 def grade_answer_text(student_answer, model_answer):
     if not student_answer:
         return False, 0
@@ -466,10 +499,10 @@ def api_results_data(exam_id):
 
     answers = ExamAnswer.query.filter_by(exam_id=exam_id).all()
     correct_count = sum(1 for a in answers if a.is_correct)
-    incorrect_count = 50 - correct_count  # max_score fixed at 50
+    incorrect_count = len(answers) - correct_count  # dynamic instead of fixed 50
 
-    # Calculate percentage score based on 50
-    total_score_percent = round((correct_count / 50) * 100, 2)
+    # Calculate percentage score based on actual number of questions
+    total_score_percent = round((correct_count / len(answers)) * 100, 2) if answers else 0
 
     # Topic summary (currently all labeled "General")
     topic_summary = {}
@@ -490,14 +523,13 @@ def api_results_data(exam_id):
     return jsonify({
         "exam_id": exam_id,
         "total_score": total_score_percent,
-        "max_score": 50,
+        "max_score": len(answers),  # dynamic instead of fixed 50
         "correct_count": correct_count,
         "incorrect_count": incorrect_count,
         "topics": topics,
         "topic_correct": topic_correct,
         "topic_total": topic_total
     })
-
 
 # ---------------------------------------------------------------------
 # Routes - Admin
